@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read for everyone (public dashboard)
+    // Allow write for everyone (security via UI lock, not server-side)
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
