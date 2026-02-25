@@ -5,6 +5,7 @@
 		groupName: string;
 		playerCount: number;
 		paidCount: number;
+		studentPPCount: number;
 		revenue: number;
 		pzszachCost: number;
 		prizesTotal: number;
@@ -27,6 +28,13 @@
 				<span class="font-medium"
 					>{{ playerCount }} ({{ paidCount }} opł.)</span
 				>
+			</div>
+			<div
+				v-if="studentPPCount > 0"
+				class="flex justify-between text-purple-600"
+			>
+				<span>🎓 Studenci PP</span>
+				<span class="font-medium">{{ studentPPCount }} (zwolnieni)</span>
 			</div>
 			<div class="flex justify-between text-green-700">
 				<span>Przychód (wpisowe)</span>

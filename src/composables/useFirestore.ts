@@ -3,15 +3,15 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   onSnapshot,
-  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Player, GroupConfig, GroupId } from '../types';
-import { playersByGroup, defaultGroupConfigs } from '../data/players';
+import { defaultGroupConfigs } from '../data/players';
 
 const groups=ref<Record<GroupId, GroupConfig>>({ ...defaultGroupConfigs });
 const players=ref<Record<GroupId, Player[]>>({
@@ -29,6 +29,7 @@ export function useFirestore () {
   async function initializeData () {
     if(initialized.value) return;
 
+    let needsScrape=false;
     const groupIds: GroupId[]=['A', 'B', 'C', 'D'];
 
     for(const gid of groupIds) {
@@ -36,7 +37,7 @@ export function useFirestore () {
       const groupSnap=await getDoc(groupRef);
 
       if(!groupSnap.exists()) {
-        // Seed group config
+        // Seed group config only – players come from scraper
         await setDoc(groupRef, {
           id: defaultGroupConfigs[gid].id,
           name: defaultGroupConfigs[gid].name,
@@ -46,14 +47,12 @@ export function useFirestore () {
           specialPrizes: defaultGroupConfigs[gid].specialPrizes,
           autoClassification: defaultGroupConfigs[gid].autoClassification,
         });
-
-        // Seed players
-        const batch=writeBatch(db);
-        for(const player of playersByGroup[gid]) {
-          const playerRef=doc(db, 'groups', gid, 'players', player.id);
-          batch.set(playerRef, { ...player });
-        }
-        await batch.commit();
+        needsScrape=true;
+      } else {
+        // Check if group has any players
+        const playersCol=collection(db, 'groups', gid, 'players');
+        const playersSnap=await getDocs(playersCol);
+        if(playersSnap.empty) needsScrape=true;
       }
     }
 
@@ -65,6 +64,7 @@ export function useFirestore () {
     }
 
     initialized.value=true;
+    return needsScrape;
   }
 
   function subscribeToGroups () {
@@ -110,6 +110,11 @@ export function useFirestore () {
     await updateDoc(playerRef, { paidManual });
   }
 
+  async function updatePlayerStudentPP (groupId: GroupId, playerId: string, studentPP: boolean) {
+    const playerRef=doc(db, 'groups', groupId, 'players', playerId);
+    await updateDoc(playerRef, { studentPP });
+  }
+
   async function updateGroupConfig (groupId: GroupId, updates: Partial<GroupConfig>) {
     const groupRef=doc(db, 'groups', groupId);
     await updateDoc(groupRef, updates as Record<string, unknown>);
@@ -143,6 +148,7 @@ export function useFirestore () {
     subscribeToGroups,
     unsubscribeAll,
     updatePlayerPaid,
+    updatePlayerStudentPP,
     updateGroupConfig,
     updatePrizes,
     updateSpecialPrizes,

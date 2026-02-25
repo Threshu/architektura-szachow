@@ -24,8 +24,8 @@ async function getCheerio () {
 const TOURNAMENTS: Record<string, string>={
   A: "https://www.chessmanager.com/pl-pl/tournaments/6526075911536640/players",
   B: "https://www.chessmanager.com/pl-pl/tournaments/5529562498465792/players",
-  C: "https://www.chessmanager.com/pl-pl/tournaments/6248872246247424/players",
-  D: "https://www.chessmanager.com/pl-pl/tournaments/5194736444637184/players",
+  C: "https://www.chessmanager.com/pl-pl/tournaments/5194736444637184/players",
+  D: "https://www.chessmanager.com/pl-pl/tournaments/5478942634672128/players",
 };
 
 // Female name detection
@@ -184,27 +184,39 @@ async function doScrape (): Promise<{ newPlayers: number; updatedPlayers: number
       const scrapedPlayers=await scrapeGroup(groupId, url);
       const playersCol=db.collection("groups").doc(groupId).collection("players");
 
-      // Get existing players
+      // Get existing players — use array to handle duplicate names
       const existing=await playersCol.get();
-      const existingMap=new Map<string, Record<string, string|number|boolean>>();
+      const existingByName=new Map<string, Array<{ id: string;[key: string]: unknown; }>>();
       existing.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
         const data=doc.data();
-        existingMap.set(data.name, { id: doc.id, ...data });
+        const name=data.name as string;
+        if(!existingByName.has(name)) {
+          existingByName.set(name, []);
+        }
+        existingByName.get(name)!.push({ id: doc.id, ...data });
+      });
+
+      // Track existing document IDs to avoid collisions
+      const existingDocIds=new Set<string>();
+      existing.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
+        existingDocIds.add(doc.id);
       });
 
       // Track which players we found in scrape
-      const scrapedNames=new Set<string>();
+      const scrapedNames=new Map<string, number>(); // name → count seen
 
       // Use batch writes for performance (max 500 ops per batch)
       let batch=db.batch();
       let opCount=0;
 
       for(const sp of scrapedPlayers) {
-        scrapedNames.add(sp.name);
-        const existingPlayer=existingMap.get(sp.name);
+        const seenCount=scrapedNames.get(sp.name)||0;
+        scrapedNames.set(sp.name, seenCount+1);
+        const existingEntries=existingByName.get(sp.name)||[];
+        const existingPlayer=existingEntries[seenCount]; // match Nth occurrence
 
         if(existingPlayer) {
-          // Update existing player - DON'T touch paidManual
+          // Update existing player - DON'T touch paidManual, studentPP
           const ref=playersCol.doc(existingPlayer.id as string);
           batch.update(ref, {
             ranking: sp.ranking,
@@ -213,14 +225,24 @@ async function doScrape (): Promise<{ newPlayers: number; updatedPlayers: number
             birthYear: sp.birthYear,
             isFemale: sp.isFemale,
             paidCM: sp.paidCM,
+            withdrawn: false,
           });
           totalUpdated++;
         } else {
-          // New player
-          const ref=playersCol.doc(sp.id);
+          // New player — use auto-generated ID to avoid collisions
+          // with existing documents when player order changes
+          let newId=sp.id;
+          if(existingDocIds.has(newId)) {
+            // ID collision: generate a unique ID instead
+            newId=playersCol.doc().id;
+          }
+          existingDocIds.add(newId);
+          const ref=playersCol.doc(newId);
           batch.set(ref, {
             ...sp,
+            id: newId,
             paidManual: false,
+            studentPP: false,
             withdrawn: false,
           });
           totalNew++;
@@ -235,15 +257,35 @@ async function doScrape (): Promise<{ newPlayers: number; updatedPlayers: number
       }
 
       // Mark players not found in scrape as withdrawn
-      for(const [name, data] of existingMap) {
-        if(!scrapedNames.has(name)&&!data.withdrawn) {
-          const ref=playersCol.doc(data.id as string);
-          batch.update(ref, { withdrawn: true });
-          opCount++;
-          if(opCount>=450) {
-            await batch.commit();
-            batch=db.batch();
-            opCount=0;
+      for(const [name, entries] of existingByName) {
+        const scrapedCount=scrapedNames.get(name)||0;
+        // If we scraped fewer occurrences than exist, withdraw the extras
+        for(let idx=scrapedCount; idx<entries.length; idx++) {
+          const data=entries[idx];
+          if(!data.withdrawn) {
+            const ref=playersCol.doc(data.id as string);
+            batch.update(ref, { withdrawn: true });
+            opCount++;
+            if(opCount>=450) {
+              await batch.commit();
+              batch=db.batch();
+              opCount=0;
+            }
+          }
+        }
+        // Also withdraw all if name not found at all
+        if(scrapedCount===0) {
+          for(const data of entries) {
+            if(!data.withdrawn) {
+              const ref=playersCol.doc(data.id as string);
+              batch.update(ref, { withdrawn: true });
+              opCount++;
+              if(opCount>=450) {
+                await batch.commit();
+                batch=db.batch();
+                opCount=0;
+              }
+            }
           }
         }
       }

@@ -15,10 +15,10 @@ export function useProfitability (
     return config.specialPrizes.reduce((sum, sp) => {
       if(!sp.enabled) return sum;
 
-      if(config.autoClassification) {
-        const count=countPlayersInCategory(groupPlayers, sp.category);
-        if(count<sp.minPlayers) return sum;
-      }
+      // Always enforce minimum players rule – prize is only paid
+      // when there are at least minPlayers in the category
+      const count=countPlayersInCategory(groupPlayers, sp.category);
+      if(count<sp.minPlayers) return sum;
 
       return sum+sp.amount;
     }, 0);
@@ -34,9 +34,11 @@ export function useProfitability (
         case 'kobieta':
           return p.isFemale;
         case 'u18':
-          return p.birthYear!==null&&p.birthYear>=CURRENT_YEAR-18;
+          // 15-18 lat: urodzone >= 2008 AND < 2012 (exclusive — nie liczy u14/u12)
+          return p.birthYear!==null&&p.birthYear>=CURRENT_YEAR-18&&p.birthYear<CURRENT_YEAR-14;
         case 'u14':
-          return p.birthYear!==null&&p.birthYear>=CURRENT_YEAR-14;
+          // 13-14 lat: urodzone >= 2012 AND < 2014 (exclusive — nie liczy u12)
+          return p.birthYear!==null&&p.birthYear>=CURRENT_YEAR-14&&p.birthYear<CURRENT_YEAR-12;
         case 'u12':
           return p.birthYear!==null&&p.birthYear>=CURRENT_YEAR-12;
       }
@@ -48,8 +50,11 @@ export function useProfitability (
     const groupPlayers=players.value[groupId];
     const playerCount=groupPlayers.length;
     const paidCount=groupPlayers.filter(isPlayerPaid).length;
+    const studentPPCount=groupPlayers.filter((p) => p.studentPP).length;
 
-    const revenue=playerCount*config.entryFee;
+    // PP students are exempt from entry fee
+    const payingPlayers=playerCount-studentPPCount;
+    const revenue=payingPlayers*config.entryFee;
     const pzszachCost=playerCount*config.pzszachFee;
     const prizesTotal=config.prizes
       .filter((p) => p.enabled)
@@ -63,6 +68,7 @@ export function useProfitability (
       groupName: config.name,
       playerCount,
       paidCount,
+      studentPPCount,
       revenue,
       pzszachCost,
       prizesTotal,
@@ -82,11 +88,12 @@ export function useProfitability (
       (acc, s) => ({
         playerCount: acc.playerCount+s.playerCount,
         paidCount: acc.paidCount+s.paidCount,
+        studentPPCount: acc.studentPPCount+s.studentPPCount,
         revenue: acc.revenue+s.revenue,
         totalCosts: acc.totalCosts+s.totalCosts,
         balance: acc.balance+s.balance,
       }),
-      { playerCount: 0, paidCount: 0, revenue: 0, totalCosts: 0, balance: 0 },
+      { playerCount: 0, paidCount: 0, studentPPCount: 0, revenue: 0, totalCosts: 0, balance: 0 },
     );
   });
 

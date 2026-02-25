@@ -8,6 +8,7 @@ export interface Player {
   isFemale: boolean;
   paidCM: boolean;
   paidManual: boolean;
+  studentPP: boolean;
   withdrawn: boolean;
 }
 
@@ -46,5 +47,5 @@ export interface ScrapeStatus {
 }
 
 export function isPlayerPaid (player: Player): boolean {
-  return player.paidCM||player.paidManual;
+  return player.paidCM||player.paidManual||player.studentPP;
 }

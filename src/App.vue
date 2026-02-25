@@ -2,6 +2,7 @@
 	import { ref, onMounted } from "vue";
 	import type { GroupId } from "./types";
 	import { useFirestore } from "./composables/useFirestore";
+	import { useScraper } from "./composables/useScraper";
 	import LockButton from "./components/atoms/LockButton.vue";
 	import RefreshButton from "./components/atoms/RefreshButton.vue";
 	import DashboardView from "./components/organisms/DashboardView.vue";
@@ -14,18 +15,25 @@
 		initializeData,
 		subscribeToGroups,
 		updatePlayerPaid,
+		updatePlayerStudentPP,
 		updatePrizes,
 		updateSpecialPrizes,
 		updateAutoClassification,
 	} = useFirestore();
+
+	const { triggerScrape } = useScraper();
 
 	const activeTab = ref<"dashboard" | "players">("dashboard");
 	const loading = ref(true);
 
 	onMounted(async () => {
 		try {
-			await initializeData();
+			const needsScrape = await initializeData();
 			subscribeToGroups();
+			if (needsScrape) {
+				console.log("Brak zawodników w bazie — uruchamiam scraping...");
+				triggerScrape();
+			}
 		} catch (err) {
 			console.error("Błąd inicjalizacji:", err);
 		} finally {
@@ -39,6 +47,14 @@
 		paidManual: boolean,
 	) {
 		updatePlayerPaid(groupId, playerId, paidManual);
+	}
+
+	function handleUpdateStudentPP(
+		groupId: GroupId,
+		playerId: string,
+		studentPP: boolean,
+	) {
+		updatePlayerStudentPP(groupId, playerId, studentPP);
 	}
 
 	function handleUpdatePrizes(
@@ -127,6 +143,7 @@
 					:groups="groups"
 					:players="players"
 					@update:paid="handleUpdatePaid"
+					@update:student-p-p="handleUpdateStudentPP"
 					@update:prizes="handleUpdatePrizes"
 					@update:special-prizes="handleUpdateSpecialPrizes"
 					@update:auto-classification="handleUpdateAutoClassification"

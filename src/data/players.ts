@@ -1,140 +1,9 @@
-import type { Player, GroupId, GroupConfig } from '../types';
-
-const FEMALE_NAMES=[
-  'Dominika', 'Aleksandra', 'Weronika', 'Lena', 'Jagoda', 'Maja',
-  'Anna', 'Maria', 'Katarzyna', 'Agnieszka', 'Zofia', 'Julia',
-  'Natalia', 'Karolina', 'Joanna', 'Magdalena', 'Monika', 'Ewa',
-  'Olga', 'Nina', 'Wiktoria', 'Emilia', 'Antonina', 'Klara',
-  'Zuzanna',
-];
-
-function detectFemale (fullName: string): boolean {
-  const firstName=fullName.includes(',')
-    ? fullName.split(',')[1]?.trim()
-    :fullName.split(' ')[0]?.trim();
-  return FEMALE_NAMES.some(fn => firstName?.startsWith(fn));
-}
-
-function p (
-  id: string,
-  name: string,
-  club: string,
-  ranking: number,
-  birthYear: number|null,
-  category: string='',
-): Player {
-  return {
-    id,
-    name,
-    club,
-    ranking,
-    birthYear,
-    category,
-    isFemale: detectFemale(name),
-    paidCM: false,
-    paidManual: false,
-    withdrawn: false,
-  };
-}
-
-export const playersByGroup: Record<GroupId, Player[]>={
-  A: [
-    p('a01', 'Przybylski, Bartosz', 'KSz LECH-WSUS Poznań', 2219, 2007, 'FM'),
-    p('a02', 'Stachowiak, Bruno', 'AZS Poznań', 2086, 2009, 'k'),
-    p('a03', 'Melerowicz, Dominik', 'M-GOK Gambit Ślesin', 2085, 2006, 'k'),
-    p('a04', 'Kawulski-Chodkiewicz, Alexander', 'KSz "Miedź" Legnica', 2037, 2010, 'I+'),
-    p('a05', 'Kiszkiel, Oskar', 'Fundacja KSz Polonia Wrocław', 2017, 2012, 'k'),
-    p('a06', 'Skrzypczak, Jan', 'ASSz "Lipno" Stęszew', 1977, 2007, 'I'),
-    p('a07', 'Paliwoda, Borys', 'ŻTMS "Baszta" Żnin', 1933, 2002, 'I+'),
-    p('a08', 'Piotrowski, Daniel', 'Szachowa GILDIA Swarzędz', 1880, 1998, 'I'),
-    p('a09', 'Szymanski, Zbigniew', 'Raszyn Poznań', 1846, 1977, 'I'),
-    p('a10', 'Tomczyk, Michał', 'Akademia Szachowa Zielona Góra', 1844, 2004, 'I'),
-    p('a11', 'Zadoń, Jakub', 'ASSz "Lipno" Stęszew', 1810, 2009, 'II'),
-    p('a12', 'Polarczyk, Paweł', 'KS KORONA Zakrzewo', 1802, 1993, 'II+'),
-    p('a13', 'Pachura, Mateusz', 'KSz LECH-WSUS Poznań', 1773, 2008, 'II+'),
-    p('a14', 'Wawrzyniak, Wojciech', 'OTSz Ostrów Wielkopolski', 1748, 1981, 'II'),
-    p('a15', 'Slavov, Wiktor', 'UKS "KSM Tęcza" Kościan', 1747, 1995, 'II+'),
-    p('a16', 'Radziszewski, Leon', 'OTSz Ostrów Wielkopolski', 1743, 2014, 'II'),
-    p('a17', 'Pawlak, Maciej', 'UKS "MDK GDYNIA"', 1742, 2006, 'II'),
-    p('a18', 'Kordus, Tomasz', 'KS 1920 Mosina', 1736, 2010, 'II'),
-    p('a19', 'Świderski, Mikołaj', '', 1734, 2006, 'II'),
-    p('a20', 'Kwiatek, Franciszek', 'AZS Poznań', 1733, 2012, 'II+'),
-    p('a21', 'Ożoga, Bartosz', '', 1681, 1974, 'II'),
-    p('a22', 'Wawrzyniak, Bartosz', 'OTSz Ostrów Wielkopolski', 1665, 2011, 'II'),
-    p('a23', 'Kaczmarczyk, Dominika', 'AZS Poznań', 1661, 2011, 'I+'),
-    p('a24', 'Szczygielski, Antoni', 'UKS Wrzesińska Akademia Szachowa', 1638, 2006, 'II'),
-    p('a25', 'Stróżewski, Wiktor', 'MDK Wągrowiec', 1635, 2012, 'II'),
-    p('a26', 'Wawrzyniak, Aleksandra', 'OTSz Ostrów Wielkopolski', 1619, 2014, 'I'),
-    p('a27', 'Siemieniak, Dominik', 'UKS GCK Sękowo', 1604, 2006, 'II'),
-    p('a28', 'May, Jakub', 'KSz LECH-WSUS Poznań', 1596, 2006, 'II'),
-    p('a29', 'Nowak, Franciszek', 'KSz LECH-WSUS Poznań', 1596, 2008, 'II'),
-    p('a30', 'Falendysh, Oleksandr', 'AZS Poznań', 1594, 2011, 'II'),
-    p('a31', 'Van Ams, James', 'UMKS "Na Pięterku" Poznań', 1592, 2014, 'II'),
-    p('a32', 'Chakrar, Samir', '', 1555, 1989, 'II'),
-    p('a33', 'Nowak, Jędrzej', 'KSz "Wieża" Śmigiel', 1554, 2010, 'II'),
-    p('a34', 'Dixon, Teodor', 'UMKS "Na Pięterku" Poznań', 1500, 2010, 'II'),
-    p('a35', 'Wawrzyniak, Weronika', 'OTSz Ostrów Wielkopolski', 1498, 2014, 'I'),
-    p('a36', 'Szczepaniak, Jan', 'ASSz "Lipno" Stęszew', 1496, 2008, 'II'),
-    p('a37', 'Gościniak, Kacper', 'UKS "KSM Tęcza" Kościan', 1800, 2008, 'II'),
-    p('a38', 'Rymar, Volodynmyr', '', 1800, 1987, ''),
-  ],
-  B: [
-    p('b01', 'Cichuta, Alan', 'UKS "Goniec" Kostrzyn Wlkp.', 1563, 2010, 'III'),
-    p('b02', 'Babiak, Lena', 'UMKS "Na Pięterku" Poznań', 1527, 2014, 'II'),
-    p('b03', 'Purczyński, Andrzej', '', 1527, 1947, 'III'),
-    p('b04', 'Krawczyk, Tomasz', 'LKS CHROBRY Gniezno', 1478, 2016, 'III'),
-    p('b05', 'Wawrzyniak, Jakub', 'OTSz Ostrów Wielkopolski', 1467, 2016, 'III'),
-    p('b06', 'Szubiński, Andrzej', '', 1441, 1956, 'III'),
-    p('b07', 'Ignasiak, Jan', 'ASSz "Lipno" Stęszew', 1600, 2018, 'III'),
-    p('b08', 'Iwina, Stanisław', 'AZS Poznań', 1600, 2007, 'III'),
-    p('b09', 'Krawczyk, Łukasz', 'LKS CHROBRY Gniezno', 1600, 2017, 'III'),
-    p('b10', 'Pustkowiak, Piotr', '', 1600, 1979, 'III'),
-    p('b11', 'Tovmasyan, David', '', 1600, 2004, 'III'),
-    p('b12', 'Ziętkiewicz, Karol', 'UMKS "Na Pięterku" Poznań', 1600, 2009, 'III'),
-    p('b13', 'Chalupka, Nick', 'Langenfelder Schachfreunde 1933', 1444, 2004, ''),
-    p('b14', 'Kolski, Jędrzej', 'ASSz "Lipno" Stęszew', 1400, 2004, 'IV'),
-    p('b15', 'Kozłowski, Maciej', 'Wielkopolski Klub Szachowy', 1400, 2008, 'IV'),
-    p('b16', 'Nowakowski, Michał', 'UMKS "Na Pięterku" Poznań', 1400, 2008, 'IV'),
-    p('b17', 'Pytel, Wiktor', 'OTSz Ostrów Wielkopolski', 1400, 2008, 'IV'),
-  ],
-  C: [
-    p('c01', 'Lewicki, Oskar', 'Szachowa GILDIA Swarzędz', 1200, 2017, 'V'),
-    p('c02', 'Świtalski, Witold', 'UMKS "Na Pięterku" Poznań', 1200, 2009, 'V'),
-    p('c03', 'Kapuściński, Kacper', '', 1000, 2002, ''),
-    p('c04', 'Kotarski, Michał', '', 1000, 1989, ''),
-    p('c05', 'Paleyeu, Daniil', '', 1000, 2017, ''),
-    p('c06', 'Ziętkiewicz, Antoni', '', 1000, 2012, ''),
-  ],
-  D: [
-    p('d01', 'Młynarz, Jakub', '', 1550, 1996, ''),
-    p('d02', 'Plewa, Hubert', '', 1541, 2004, ''),
-    p('d03', 'Pietras, Antoni', 'Szachowa GILDIA Swarzędz', 1406, 2016, 'IV'),
-    p('d04', 'Pietras, Zuzanna', 'Szachowa GILDIA Swarzędz', 1400, 2014, 'III'),
-    p('d05', 'Dołżonek, Jakub', 'UMKS "Na Pięterku" Poznań', 1400, 2015, 'IV'),
-    p('d06', 'Foltan, Kordian', 'Szachowa GILDIA Swarzędz', 1400, 2017, 'IV'),
-    p('d07', 'Grabia, Michał', 'UMKS "Na Pięterku" Poznań', 1400, 2017, 'IV'),
-    p('d08', 'Polarczyk, Miłosz', '', 1400, 2013, 'IV'),
-    p('d09', 'Kolber, Jagoda', 'LKS CHROBRY Gniezno', 1250, 2018, 'IV'),
-    p('d10', 'Dudziak, Nikodem', '', 1200, 2019, 'V'),
-    p('d11', 'Karczmarczyk, Joachim', 'AZS Poznań', 1200, 2015, 'V'),
-    p('d12', 'Korczyński, Maksymilian', '', 1200, 2016, 'V'),
-    p('d13', 'Czajka, Marcin', '', 1000, null, ''),
-    p('d14', 'Dudziak, Olga', '', 1000, 2017, ''),
-    p('d15', 'Grabia, Maja', '', 1000, 2014, ''),
-    p('d16', 'Kantor, Krzysztof', '', 1000, 2005, ''),
-    p('d17', 'Kruszyński, Andrzej', '', 1000, 2009, ''),
-    p('d18', 'Kwiatkowski, Patryk', '', 1000, 1998, ''),
-    p('d19', 'Laskowski, Atanazy', '', 1000, 1990, ''),
-    p('d20', 'Lechna, Jacek', '', 1000, 1990, ''),
-    p('d21', 'Sioda, Fryderyk', '', 1000, 2019, ''),
-    p('d22', 'Szaban, Maciej', '', 1000, 1997, ''),
-  ],
-};
+import type { GroupId, GroupConfig } from '../types';
 
 export const defaultGroupConfigs: Record<GroupId, GroupConfig>={
   A: {
     id: 'A',
-    name: 'Grupa A – FIDE – Ranking ≥ 1800',
+    name: 'Grupa A',
     entryFee: 80,
     pzszachFee: 30,
     prizes: [
@@ -152,7 +21,7 @@ export const defaultGroupConfigs: Record<GroupId, GroupConfig>={
   },
   B: {
     id: 'B',
-    name: 'Grupa B – FIDE – Ranking 1400-1600',
+    name: 'Grupa B',
     entryFee: 70,
     pzszachFee: 25,
     prizes: [
@@ -170,7 +39,7 @@ export const defaultGroupConfigs: Record<GroupId, GroupConfig>={
   },
   C: {
     id: 'C',
-    name: 'Grupa C – Ranking 1000-1250',
+    name: 'Grupa C',
     entryFee: 50,
     pzszachFee: 0,
     prizes: [
@@ -188,7 +57,7 @@ export const defaultGroupConfigs: Record<GroupId, GroupConfig>={
   },
   D: {
     id: 'D',
-    name: 'Grupa D – Ranking 1000-1400',
+    name: 'Grupa D',
     entryFee: 50,
     pzszachFee: 0,
     prizes: [

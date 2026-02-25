@@ -25,6 +25,7 @@
 				:group-name="s.groupName"
 				:player-count="s.playerCount"
 				:paid-count="s.paidCount"
+				:student-p-p-count="s.studentPPCount"
 				:revenue="s.revenue"
 				:pzszach-cost="s.pzszachCost"
 				:prizes-total="s.prizesTotal"
@@ -57,6 +58,12 @@
 					>
 						{{ totalSummary.paidCount }}/{{ totalSummary.playerCount }}
 					</span>
+				</div>
+				<div v-if="totalSummary.studentPPCount > 0">
+					<span class="text-purple-500">🎓 Studenci PP:</span>
+					<span class="ml-1 font-bold text-purple-700">{{
+						totalSummary.studentPPCount
+					}}</span>
 				</div>
 				<div>
 					<span class="text-gray-500">Przychód:</span>

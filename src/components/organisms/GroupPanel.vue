@@ -13,6 +13,7 @@
 
 	const emit = defineEmits<{
 		"update:paid": [playerId: string, paidManual: boolean];
+		"update:studentPP": [playerId: string, studentPP: boolean];
 		"update:prizes": [prizes: GroupConfig["prizes"]];
 		"update:specialPrizes": [prizes: GroupConfig["specialPrizes"]];
 		"update:autoClassification": [auto: boolean];
@@ -22,6 +23,9 @@
 	const showPrizes = ref(false);
 
 	const paidCount = computed(() => props.players.filter(isPlayerPaid).length);
+	const studentPPCount = computed(
+		() => props.players.filter((p) => p.studentPP).length,
+	);
 </script>
 
 <template>
@@ -32,6 +36,7 @@
 			:name="config.name"
 			:player-count="players.length"
 			:paid-count="paidCount"
+			:student-p-p-count="studentPPCount"
 			@toggle-expand="expanded = !expanded"
 		/>
 
@@ -68,6 +73,12 @@
 								Kat.
 							</th>
 							<th
+								class="px-2 py-1.5 text-xs font-semibold text-purple-600 text-center"
+								title="Student Politechniki Poznańskiej (zwolniony z opłaty)"
+							>
+								PP
+							</th>
+							<th
 								class="px-2 py-1.5 text-xs font-semibold text-gray-500 text-center"
 							>
 								Opł.
@@ -81,6 +92,9 @@
 							:player="player"
 							:index="i + 1"
 							@update:paid="(id, val) => emit('update:paid', id, val)"
+							@update:student-p-p="
+								(id, val) => emit('update:studentPP', id, val)
+							"
 						/>
 					</tbody>
 				</table>

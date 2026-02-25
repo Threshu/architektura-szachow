@@ -9,6 +9,11 @@
 
 	const emit = defineEmits<{
 		"update:paid": [groupId: GroupId, playerId: string, paidManual: boolean];
+		"update:studentPP": [
+			groupId: GroupId,
+			playerId: string,
+			studentPP: boolean,
+		];
 		"update:prizes": [groupId: GroupId, prizes: GroupConfig["prizes"]];
 		"update:specialPrizes": [
 			groupId: GroupId,
@@ -28,6 +33,9 @@
 			:config="groups[gid]"
 			:players="players[gid]"
 			@update:paid="(playerId, val) => emit('update:paid', gid, playerId, val)"
+			@update:student-p-p="
+				(playerId, val) => emit('update:studentPP', gid, playerId, val)
+			"
 			@update:prizes="(p) => emit('update:prizes', gid, p)"
 			@update:special-prizes="(p) => emit('update:specialPrizes', gid, p)"
 			@update:auto-classification="

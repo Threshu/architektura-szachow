@@ -27,9 +27,19 @@
 				case "kobieta":
 					return p.isFemale;
 				case "u18":
-					return p.birthYear !== null && p.birthYear >= CURRENT_YEAR - 18;
+					// Exclusive: 15-18 lat (nie liczy u14/u12)
+					return (
+						p.birthYear !== null &&
+						p.birthYear >= CURRENT_YEAR - 18 &&
+						p.birthYear < CURRENT_YEAR - 14
+					);
 				case "u14":
-					return p.birthYear !== null && p.birthYear >= CURRENT_YEAR - 14;
+					// Exclusive: 13-14 lat (nie liczy u12)
+					return (
+						p.birthYear !== null &&
+						p.birthYear >= CURRENT_YEAR - 14 &&
+						p.birthYear < CURRENT_YEAR - 12
+					);
 				case "u12":
 					return p.birthYear !== null && p.birthYear >= CURRENT_YEAR - 12;
 				default:
@@ -130,7 +140,6 @@
 						:disabled="!isUnlocked"
 					/>
 					<span
-						v-if="config.autoClassification"
 						class="text-xs"
 						:class="
 							countInCategory(sp.category) >= sp.minPlayers
